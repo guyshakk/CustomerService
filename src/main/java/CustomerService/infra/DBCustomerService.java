@@ -1,12 +1,22 @@
-package com.example.demo;
+package CustomerService.infra;
 
-import java.util.List;
+import java.util.List; 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import CustomerService.aop.CountryNotFoundException;
+import CustomerService.aop.CustomerAlreadyExistsException;
+import CustomerService.aop.CustomerNotFoundException;
+import CustomerService.aop.IncompatibleCustomerDetailsException;
+import CustomerService.aop.InvalidPaginationDataException;
+import CustomerService.dao.CountryDao;
+import CustomerService.dao.CustomerDao;
+import CustomerService.data.Country;
+import CustomerService.data.Customer;
 
 @Service
 public class DBCustomerService implements CustomerService {
@@ -26,24 +36,23 @@ public class DBCustomerService implements CustomerService {
 	public Customer createCustomer(Customer customer) {
 		if (!validateCustomer(customer))
 			throw new IncompatibleCustomerDetailsException(); //validate all customer details
-		Customer cust = null;
-		Country country = null;
-		String custId = customer.getEmail();
-		try {
-			cust = getCustomerById(custId); //check if customer already exists
-		} catch (CustomerNotFoundException e) {
-		}
-		if (cust != null)
-			throw new CustomerAlreadyExistsException();
-		try {
-			country = getCountryByCode(customer.getCountryCode()); //check if country exists or should be created
-		}
-		catch (CountryNotFoundException e) {
-			country = createCountry(new Country(customer.getCountryCode(), customer.getCountryName()));
-		}
-		customer.setCountryName(country.getCountryName()); //override supplied country's name
-		Customer newCustomer = this.customerDao.create(customer); //create new customer
-		return newCustomer;
+		Optional<Customer> cust = null;
+		Optional<Country> Country =this.countryDao.getCountryById(customer.getCountryCode());
+
+		if(!Country.isPresent()) {
+	this.countryDao.
+	createCountry(new Country(customer.getCountryCode(),customer.getCountryName()));
+}else {
+	customer.setCountryName(Country.get().getCountryName());
+}
+
+cust=this.customerDao.getCustomerById(customer.getEmail());
+if(!cust.isPresent()) {
+	return this.customerDao.create(customer);
+}else {
+	throw new CustomerAlreadyExistsException("customer already exist: "+customer.getEmail());
+}
+
 	}
 
 	@Override
@@ -61,6 +70,7 @@ public class DBCustomerService implements CustomerService {
 	@Override
 	@Transactional
 	public void updateCustomer(String email, Customer update) {
+
 		Customer currentCustomer = getCustomerById(email);
 		if (update.getBirthdate() != null)
 			currentCustomer.setBirthdate(update.getBirthdate());
@@ -71,9 +81,9 @@ public class DBCustomerService implements CustomerService {
 				currentCustomer.setCountryName(country.getCountryName());
 			}
 		}
-		if (update.getFirst() != null && update.getFirst().trim().length() > 0)
+		if (update.getFirst() != null &&! update.getFirst().trim().isEmpty())
 			currentCustomer.setFirst(update.getFirst());
-		if (update.getLast() != null && update.getLast().trim().length() > 0)
+		if (update.getLast() != null && !update.getLast().trim().isEmpty() )
 			currentCustomer.setLast(update.getLast());
 		this.customerDao.updateCustomer(email, currentCustomer);
 	}
@@ -105,7 +115,7 @@ public class DBCustomerService implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Customer> readCustomersByAge(String age, int size, int page) {
+	public List<Customer> readCustomersByAge(float age, int size, int page) {
 		validatePagination(size, page);
 		return this.customerDao
 				.readCustomersByAge(age, size, page, this.defaultSortBy);
@@ -149,12 +159,12 @@ public class DBCustomerService implements CustomerService {
 				customer.getCountryCode() != null &&
 				customer.getCountryCode().matches("^[A-Z][A-Z]$") && //must be two uppercase letters
 				customer.getCountryName() != null &&
-				customer.getCountryName().trim().length() > 0 &&
+				!customer.getCountryName().trim().isEmpty() &&
 				validateEmail(customer.getEmail()) &&
 				customer.getFirst() != null &&
-				customer.getFirst().trim().length() > 0 &&
+				!customer.getFirst().trim().isEmpty() &&
 				customer.getLast() != null &&
-				customer.getLast().trim().length() > 0;
+				!customer.getLast().trim().isEmpty() ;
 	}
 
 	private boolean validateEmail(String email) {

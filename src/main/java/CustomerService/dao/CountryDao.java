@@ -1,6 +1,8 @@
-package com.example.demo;
+package CustomerService.dao;
 
-import java.util.Optional;
+import java.util.Optional; 
+
+import CustomerService.data.Country;
 
 public interface CountryDao {
 

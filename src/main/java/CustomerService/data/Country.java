@@ -1,11 +1,9 @@
-package com.example.demo;
+package CustomerService.data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.springframework.data.annotation.Id;  
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name="Countries")
+@Document(collection="Countries")
 public class Country {
 
 	private String countryCode;

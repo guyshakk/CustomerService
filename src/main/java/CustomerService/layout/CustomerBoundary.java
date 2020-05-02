@@ -1,6 +1,10 @@
-package com.example.demo;
+package CustomerService.layout;
 
-import java.util.Date;
+import java.util.Date; 
+
+import CustomerService.data.Country;
+import CustomerService.data.Customer;
+import CustomerService.data.FullName;
 
 public class CustomerBoundary {
 

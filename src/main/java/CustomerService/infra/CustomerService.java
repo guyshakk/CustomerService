@@ -1,6 +1,9 @@
-package com.example.demo;
+package CustomerService.infra;
 
-import java.util.List;
+import java.util.List; 
+
+import CustomerService.data.Country;
+import CustomerService.data.Customer;
 
 public interface CustomerService {
 
@@ -16,7 +19,7 @@ public interface CustomerService {
 	
 	public List<Customer> readCustomersByLastName (String lastName, int size, int page);
 	
-	public List<Customer> readCustomersByAge (String age, int size, int page);
+	public List<Customer> readCustomersByAge (float age, int size, int page);
 	
 	public List<Customer> readCustomersByCountryCode (String countryCode, int size, int page);
 

@@ -1,6 +1,6 @@
-package com.example.demo;
+package CustomerService.layout;
 
-import java.util.Collections;
+import java.util.Collections;  
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,6 +17,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import CustomerService.aop.CountryNotFoundException;
+import CustomerService.aop.CustomerAlreadyExistsException;
+import CustomerService.aop.CustomerNotFoundException;
+import CustomerService.aop.IncompatibleCountryDetailsException;
+import CustomerService.aop.IncompatibleCustomerDetailsException;
+import CustomerService.aop.IncompatibleSearchInputException;
+import CustomerService.aop.InvalidPaginationDataException;
+import CustomerService. aop.TooManyRequestParametersException;
+import CustomerService.data.Country;
+import CustomerService.data.CriteriaType;
+import CustomerService.data.Customer;
+import CustomerService.infra.CustomerService;
+
 @RestController
 public class CustomerController {
 
@@ -25,6 +38,7 @@ public class CustomerController {
 	
 	@Autowired
 	public CustomerController(CustomerService customerService) {
+		super();
 		this.customerService = customerService;
 	}
 	
@@ -37,7 +51,7 @@ public class CustomerController {
 				this.customerService
 					.createCustomer(customer.toEntity()));
 	}
-	
+
 	@RequestMapping(
 			path = baseUrl+"/{email}",
 			method = RequestMethod.GET,
@@ -47,7 +61,6 @@ public class CustomerController {
 				this.customerService
 					.getCustomerById(email));
 	}
-	
 	@RequestMapping(
 			path = baseUrl+"/{email}",
 			method = RequestMethod.PUT,
@@ -58,6 +71,7 @@ public class CustomerController {
 		this.customerService
 			.updateCustomer(email, update);
 	}
+
 	
 	@RequestMapping(
 			path = baseUrl,
@@ -66,18 +80,21 @@ public class CustomerController {
 		this.customerService
 			.deleteAllCustomers();
 	}
-	
+
 	@RequestMapping(
-			path = baseUrl,
+			path = baseUrl, 
 			method = RequestMethod.GET,
 			produces=MediaType.APPLICATION_JSON_VALUE)
 	public  CustomerBoundary[] getCustomersBy (@RequestParam(name="byLastName", required = false, defaultValue = "") String byLastName,
-			@RequestParam(name="byAgeGreaterThan", required = false, defaultValue = "") String byAgeGreaterThan,
+			@RequestParam(name="byAgeGreaterThan", required = false, defaultValue = "0") float byAgeGreaterThan,
 			@RequestParam(name="byCountryCode", required = false, defaultValue = "") String byCountryCode,
 			@RequestParam(name="size", required = false, defaultValue = "10") int size,
 			@RequestParam(name="page", required = false, defaultValue = "0") int page)  {
- 		
-		CriteriaType criteria = checkRequestValidity(byAgeGreaterThan, byCountryCode, byLastName);
+ 		String s;
+		if(byAgeGreaterThan==0)
+ 			s="";
+		else s=byAgeGreaterThan+"";
+		CriteriaType criteria = checkRequestValidity(s, byCountryCode, byLastName);
 		List<Customer> customers;
 		
 		if (criteria.equals(CriteriaType.byLastName)) {

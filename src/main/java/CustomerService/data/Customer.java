@@ -1,17 +1,16 @@
-package com.example.demo;
+package CustomerService.data;
 
-import java.util.Date;
+import java.util.Date;   
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.springframework.data.annotation.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-@Entity
-@Table(name="Customers")
-public class Customer {
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection ="Customers")
+public class Customer {
+	@Id
 	private String email;
 	private String first;
 	private String last;
@@ -32,7 +31,6 @@ public class Customer {
 		this.countryName = countryName;
 	}
 
-	@Id
 	public String getEmail() {
 		return email;
 	}

@@ -1,4 +1,4 @@
-package com.example.demo;
+package CustomerService.aop;
 
 public class InvalidPaginationDataException extends RuntimeException {
 
