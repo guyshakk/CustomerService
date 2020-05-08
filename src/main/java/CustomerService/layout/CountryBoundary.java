@@ -4,25 +4,25 @@ import CustomerService.data.Country;
 
 public class CountryBoundary {
 
-	private String countryCode;
+	private String code;
 	private String countryName;
 	
 	public CountryBoundary() {
 	}
 	
-	public CountryBoundary(String countryCode, String countryName) {
-		if (countryCode != null && countryName != null) {
-			this.countryCode = countryCode;
+	public CountryBoundary(String code, String countryName) {
+		if (code != null && countryName != null) {
+			this.code = code;
 			this.countryName = countryName;
 		}
 	}
 	
-	public String getCountryCode() {
-		return countryCode;
+	public String getCode() {
+		return code;
 	}
 
-	public void setCountryCode(String countryCode) {
-		this.countryCode = countryCode;
+	public void setCode(String code) {
+		this.code = code;
 	}
 
 	public String getCountryName() {
@@ -35,8 +35,8 @@ public class CountryBoundary {
 
 	public Country toEntity() {
 		Country entity = new Country();
-		if (this.countryCode != null && this.countryName != null) { //Do we need both of them to not be null or just countryCode?
-			entity.setCountryCode(this.countryCode);
+		if (this.code != null && this.countryName != null) {
+			entity.setCode(this.code);
 			entity.setCountryName(this.countryName);
 		}
 		return entity;

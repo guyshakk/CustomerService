@@ -6,24 +6,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection="Countries")
 public class Country {
 
-	private String countryCode;
+	private String code;
 	private String countryName;
 	
 	public Country() {
 	}
 
-	public Country(String countryCode, String countryName) {
-		this.countryCode = countryCode;
+	public Country(String code, String countryName) {
+		this.code = code;
 		this.countryName = countryName;
 	}
 
 	@Id
-	public String getCountryCode() {
-		return countryCode;
+	public String getCode() {
+		return code;
 	}
 
-	public void setCountryCode(String countryCode) {
-		this.countryCode = countryCode;
+	public void setCode(String code) {
+		this.code = code;
 	}
 
 	public String getCountryName() {

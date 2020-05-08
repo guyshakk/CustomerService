@@ -3,6 +3,7 @@ package CustomerService.dao;
 import java.util.List; 
 import java.util.Optional;
 
+import CustomerService.data.Country;
 import CustomerService.data.Customer;
 
 public interface CustomerDao {
@@ -17,9 +18,9 @@ public interface CustomerDao {
 	
 	public List<Customer> readCustomersByLastName (String lastName, int size, int page, String sortBy);
 	
-	public List<Customer> readCustomersByAge (float age, int size, int page, String sortBy);
+	public List<Customer> readCustomersByAge (int age, int size, int page, String sortBy);
 	
-	public List<Customer> readCustomersByCountryCode (String countryCode, int size, int page, String sortBy);
+	public List<Customer> readCustomersByCountry (Country country, int size, int page, String sortBy);
 
 	public List<Customer> readAllCustomers(int size, int page, String sortBy);
 }

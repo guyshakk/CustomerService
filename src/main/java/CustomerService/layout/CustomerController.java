@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import CustomerService.aop.CountryAlreadyExistsException;
 import CustomerService.aop.CountryNotFoundException;
 import CustomerService.aop.CustomerAlreadyExistsException;
 import CustomerService.aop.CustomerNotFoundException;
@@ -24,7 +25,7 @@ import CustomerService.aop.IncompatibleCountryDetailsException;
 import CustomerService.aop.IncompatibleCustomerDetailsException;
 import CustomerService.aop.IncompatibleSearchInputException;
 import CustomerService.aop.InvalidPaginationDataException;
-import CustomerService. aop.TooManyRequestParametersException;
+import CustomerService.aop.TooManyRequestParametersException;
 import CustomerService.data.Country;
 import CustomerService.data.CriteriaType;
 import CustomerService.data.Customer;
@@ -67,9 +68,9 @@ public class CustomerController {
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	public void updateCustomer (
 			@PathVariable("email") String email, 
-			@RequestBody Customer update) {
+			@RequestBody CustomerBoundary update) {
 		this.customerService
-			.updateCustomer(email, update);
+			.updateCustomer(email, update.toEntity());
 	}
 
 	
@@ -86,7 +87,7 @@ public class CustomerController {
 			method = RequestMethod.GET,
 			produces=MediaType.APPLICATION_JSON_VALUE)
 	public  CustomerBoundary[] getCustomersBy (@RequestParam(name="byLastName", required = false, defaultValue = "") String byLastName,
-			@RequestParam(name="byAgeGreaterThan", required = false, defaultValue = "0") float byAgeGreaterThan,
+			@RequestParam(name="byAgeGreaterThan", required = false, defaultValue = "0") int byAgeGreaterThan,
 			@RequestParam(name="byCountryCode", required = false, defaultValue = "") String byCountryCode,
 			@RequestParam(name="size", required = false, defaultValue = "10") int size,
 			@RequestParam(name="page", required = false, defaultValue = "0") int page)  {
@@ -117,7 +118,7 @@ public class CustomerController {
 	}
 	
 	@RequestMapping(
-			path = "/countries",
+			path = "/countries/{countryCode}",
 			method = RequestMethod.PUT,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	public void updateCountry (
@@ -181,6 +182,16 @@ public class CustomerController {
 		String message = e.getMessage();
 		if (message == null || message.trim().length() == 0) {
 			message = "Customer already exists";
+		}
+		return Collections.singletonMap("error", message);
+	}
+	
+	@ExceptionHandler
+	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+	public Map<String, Object> handleError (CountryAlreadyExistsException e){
+		String message = e.getMessage();
+		if (message == null || message.trim().length() == 0) {
+			message = "Country already exists";
 		}
 		return Collections.singletonMap("error", message);
 	}

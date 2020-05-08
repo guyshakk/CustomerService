@@ -1,5 +1,7 @@
 package CustomerService.infra;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List; 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -36,23 +38,22 @@ public class DBCustomerService implements CustomerService {
 	public Customer createCustomer(Customer customer) {
 		if (!validateCustomer(customer))
 			throw new IncompatibleCustomerDetailsException(); //validate all customer details
-		Optional<Customer> cust = null;
-		Optional<Country> Country =this.countryDao.getCountryById(customer.getCountryCode());
-
-		if(!Country.isPresent()) {
-	this.countryDao.
-	createCountry(new Country(customer.getCountryCode(),customer.getCountryName()));
-}else {
-	customer.setCountryName(Country.get().getCountryName());
-}
-
-cust=this.customerDao.getCustomerById(customer.getEmail());
-if(!cust.isPresent()) {
-	return this.customerDao.create(customer);
-}else {
-	throw new CustomerAlreadyExistsException("customer already exist: "+customer.getEmail());
-}
-
+		Country country = null;
+		String custId = customer.getEmail();
+		try {
+			getCustomerById(custId);//check if customer already exists
+			throw new CustomerAlreadyExistsException();
+		} catch (CustomerNotFoundException e) {
+		}
+		try {
+			country = getCountryByCode(customer.getCountry().getCode()); //check if country exists or should be created
+		}
+		catch (CountryNotFoundException e) {
+			country = createCountry(customer.getCountry());
+		}
+		customer.setCountry(country);
+		Customer newCustomer = this.customerDao.create(customer); //create new customer
+		return newCustomer;
 	}
 
 	@Override
@@ -74,28 +75,31 @@ if(!cust.isPresent()) {
 		Customer currentCustomer = getCustomerById(email);
 		if (update.getBirthdate() != null)
 			currentCustomer.setBirthdate(update.getBirthdate());
-		if (update.getCountryCode() != null) {
-			Country country = getCountryByCode(update.getCountryCode()); //This could lead to countryNotFoundException because creation of new country is not allowed here
-			if (country != null && !country.getCountryCode().equals(currentCustomer.getCountryCode())) {
-				currentCustomer.setCountryCode(country.getCountryCode());
-				currentCustomer.setCountryName(country.getCountryName());
+		if (update.getCountry() != null) {
+			Country country;
+			try {
+				country = getCountryByCode(update.getCountry().getCode());
+				if (!country.getCode().equals(currentCustomer.getCountry().getCode())) {
+					currentCustomer.setCountry(country);
+				}
+			} catch (CountryNotFoundException e) {
 			}
 		}
-		if (update.getFirst() != null &&! update.getFirst().trim().isEmpty())
+		if (update.getFirst() != null && !update.getFirst().trim().isEmpty())
 			currentCustomer.setFirst(update.getFirst());
-		if (update.getLast() != null && !update.getLast().trim().isEmpty() )
+		if (update.getLast() != null && !update.getLast().trim().isEmpty())
 			currentCustomer.setLast(update.getLast());
 		this.customerDao.updateCustomer(email, currentCustomer);
 	}
 
 	@Override
 	@Transactional
-	public void updateCountry(String countryCode, Country country) {
-		Country currentCountry = getCountryByCode(countryCode);
-		if (country.getCountryName() != null && country.getCountryName().trim().length() > 0) {
+	public void updateCountry(String code, Country country) {
+		Country currentCountry = getCountryByCode(code);
+		if (country.getCountryName() != null && !country.getCountryName().trim().isEmpty()) {
 			currentCountry.setCountryName(country.getCountryName());
 		}
-		this.countryDao.updateCountry(countryCode, currentCountry);
+		this.countryDao.updateCountry(code, currentCountry);
 	}
 
 	@Override
@@ -115,7 +119,7 @@ if(!cust.isPresent()) {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Customer> readCustomersByAge(float age, int size, int page) {
+	public List<Customer> readCustomersByAge(int age, int size, int page) {
 		validatePagination(size, page);
 		return this.customerDao
 				.readCustomersByAge(age, size, page, this.defaultSortBy);
@@ -123,10 +127,16 @@ if(!cust.isPresent()) {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Customer> readCustomersByCountryCode(String countryCode, int size, int page) {
+	public List<Customer> readCustomersByCountryCode(String code, int size, int page) {
 		validatePagination(size, page);
+		Country country;
+		try {
+			country = getCountryByCode(code);
+		} catch (CountryNotFoundException e) {
+			return new ArrayList<Customer>();
+		}
 		return this.customerDao
-				.readCustomersByCountryCode(countryCode, size, page, this.defaultSortBy);
+				.readCustomersByCountry(country, size, page, this.defaultSortBy);
 	}
 
 	@Override
@@ -143,9 +153,9 @@ if(!cust.isPresent()) {
 	}
 	
 	@Transactional(readOnly = true)
-	private Country getCountryByCode(String countryCode) {
+	private Country getCountryByCode(String code) {
 		Optional<Country> country = this.countryDao
-				.getCountryById(countryCode);
+				.getCountryById(code);
 		if (country.isPresent()) {
 			return country.get();
 		}
@@ -156,22 +166,25 @@ if(!cust.isPresent()) {
 	
 	private boolean validateCustomer(Customer customer) {
 		return customer.getBirthdate() != null &&
-				customer.getCountryCode() != null &&
-				customer.getCountryCode().matches("^[A-Z][A-Z]$") && //must be two uppercase letters
-				customer.getCountryName() != null &&
-				!customer.getCountryName().trim().isEmpty() &&
+				customer.getBirthdate().isBefore(LocalDate.now()) &&
+				customer.getBirthdate().isAfter(LocalDate.now().minusYears(150)) && //we assume no person is older than 150
+				customer.getCountry() != null &&
+				customer.getCountry().getCode() != null &&
+				customer.getCountry().getCode().matches("^[A-Z][A-Z]$") && //must be two uppercase letters
+				customer.getCountry().getCountryName() != null &&
+				!customer.getCountry().getCountryName().trim().isEmpty() &&
 				validateEmail(customer.getEmail()) &&
 				customer.getFirst() != null &&
 				!customer.getFirst().trim().isEmpty() &&
 				customer.getLast() != null &&
-				!customer.getLast().trim().isEmpty() ;
+				!customer.getLast().trim().isEmpty();
 	}
 
 	private boolean validateEmail(String email) {
 		String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+ 
                 "[a-zA-Z0-9_+&*-]+)*@" + 
                 "(?:[a-zA-Z0-9-]+\\.)+[a-z" + 
-                "A-Z]{2,7}$"; 
+                "A-Z]{1,}$"; 
 		Pattern pat = Pattern.compile(emailRegex); 
 		if (email == null) 
 			return false; 

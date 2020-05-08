@@ -1,7 +1,10 @@
 package CustomerService.layout;
 
-import java.util.Date; 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
+import CustomerService.aop.IncompatibleCustomerDetailsException;
 import CustomerService.data.Country;
 import CustomerService.data.Customer;
 import CustomerService.data.FullName;
@@ -10,21 +13,24 @@ public class CustomerBoundary {
 
 	private String email;
 	private FullName name;
-	private Date birthdate;
+	private String birthdate;
 	private Country country;
 	
 	public CustomerBoundary() {
 	}
 	
 	public CustomerBoundary(Customer entity) {
-		if (entity.getBirthdate() != null)
-			this.setBirthdate(entity.getBirthdate());
+		if (entity.getBirthdate() != null) {
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+			String formattedString = entity.getBirthdate().format(formatter);
+			this.setBirthdate(formattedString);
+		}
 		if (entity.getEmail() != null)
 			this.setEmail(entity.getEmail());
 		if (entity.getFirst() != null && entity.getLast() != null)
 			this.setName(new FullName(entity.getFirst(), entity.getLast()));
-		if (entity.getCountryCode() != null && entity.getCountryName() != null) //should we require conuntryName not to be null??
-			this.setCountry(new Country(entity.getCountryCode(), entity.getCountryName()));
+		if (entity.getCountry() != null)
+			this.setCountry(entity.getCountry());
 	}
 
 	public String getEmail() {
@@ -43,11 +49,11 @@ public class CustomerBoundary {
 		this.name = name;
 	}
 
-	public Date getBirthdate() {
+	public String getBirthdate() {
 		return birthdate;
 	}
 
-	public void setBirthdate(Date birthdate) {
+	public void setBirthdate(String birthdate) {
 		this.birthdate = birthdate;
 	}
 
@@ -61,7 +67,15 @@ public class CustomerBoundary {
 	
 	public Customer toEntity() {
 		Customer customer = new Customer();
-		customer.setBirthdate(this.getBirthdate());
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+		LocalDate dt;
+		try {
+			dt = LocalDate.parse(getBirthdate(), dtf);
+			customer.setBirthdate(dt);
+		} catch (DateTimeParseException e) {
+			System.out.println(e.getMessage());
+			throw new IncompatibleCustomerDetailsException();
+		}
 		if (this.getEmail() != null) {
 			customer.setEmail(this.getEmail());
 		}
@@ -70,8 +84,7 @@ public class CustomerBoundary {
 			customer.setLast(this.getName().getLast());
 		}
 		if (this.getCountry() != null) {
-			customer.setCountryCode(this.getCountry().getCountryCode());
-			customer.setCountryName(this.getCountry().getCountryName());
+			customer.setCountry(this.getCountry());
 		}
 		return customer;
 	}

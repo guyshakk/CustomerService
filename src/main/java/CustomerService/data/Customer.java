@@ -1,11 +1,12 @@
 package CustomerService.data;
 
-import java.util.Date;   
+import java.time.LocalDate;
 
 import org.springframework.data.annotation.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection ="Customers")
@@ -14,21 +15,19 @@ public class Customer {
 	private String email;
 	private String first;
 	private String last;
-	private Date birthdate;
-	private String countryCode;
-	private String countryName;
+	private LocalDate birthdate;
+	@DBRef
+	private Country country;
 	
 	public Customer() {
 	}
 
-	public Customer(String email, String first, String last, Date birthdate, String countryCode,
-			String countryName) {
+	public Customer(String email, String first, String last, LocalDate birthdate, Country country) {
 		this.email = email;
 		this.first = first;
 		this.last = last;
 		this.birthdate = birthdate;
-		this.countryCode = countryCode;
-		this.countryName = countryName;
+		this.country = country;
 	}
 
 	public String getEmail() {
@@ -56,27 +55,19 @@ public class Customer {
 	}
 
 	@Temporal(TemporalType.DATE)
-	public Date getBirthdate() {
+	public LocalDate getBirthdate() {
 		return birthdate;
 	}
 
-	public void setBirthdate(Date birthdate) {
+	public void setBirthdate(LocalDate birthdate) {
 		this.birthdate = birthdate;
 	}
 
-	public String getCountryCode() {
-		return countryCode;
+	public Country getCountry() {
+		return country;
 	}
 
-	public void setCountryCode(String countryCode) {
-		this.countryCode = countryCode;
-	}
-
-	public String getCountryName() {
-		return countryName;
-	}
-
-	public void setCountryName(String countryName) {
-		this.countryName = countryName;
-	}
+	public void setCountry(Country country) {
+		this.country = country;
+	}	
 }

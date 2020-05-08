@@ -19,9 +19,9 @@ public interface CustomerService {
 	
 	public List<Customer> readCustomersByLastName (String lastName, int size, int page);
 	
-	public List<Customer> readCustomersByAge (float age, int size, int page);
+	public List<Customer> readCustomersByAge (int age, int size, int page);
 	
-	public List<Customer> readCustomersByCountryCode (String countryCode, int size, int page);
+	public List<Customer> readCustomersByCountryCode (String code, int size, int page);
 
 	public List<Customer> readAllCustomers(int size, int page);
 }
